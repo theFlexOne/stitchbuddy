@@ -1,80 +1,62 @@
-import { useState } from 'react'
-import { SketchPicker, ColorChangeHandler, ColorResult } from 'react-color'
+import { useRef } from 'react';
+import Pixel from './Pixel';
 
-export default function PixelGrid({ w, h }: {
-  w: number,
-  h: number,
-}) {
-  const [grid, setGrid] = useState(createEmptyGrid(w, h))
+export default function PixelGrid({ w, h }: { w: number; h: number }) {
+  const gridRef = useRef<string[][]>(createEmptyGrid(w, h));
+
+  // function updatePixelState(row: number, col: number) {
+  //   return (color: string) => {
+  //     const newGrid = grid.map((gridRow, rowIndex) => {
+  //       return gridRow.map((gridPixel, colIndex) => {
+  //         if (rowIndex === row && colIndex === col) {
+  //           return color;
+  //         }
+  //         return gridPixel;
+  //       });
+  //     });
+  //     setGrid(newGrid);
+  //   };
+  // }
 
   function updatePixelState(row: number, col: number) {
     return (color: string) => {
-      const newGrid = grid.map((gridRow, rowIndex) => {
-        return gridRow.map((gridPixel, colIndex) => {
-          if (rowIndex === row && colIndex === col) {
-            return color
-          }
-          return gridPixel
-        })
-      })
-      setGrid(newGrid)
-    }
+      gridRef.current[row][col] = color;
+    };
   }
 
   return (
-    <div className='flex flex-col items-center justify-center'>
-      {grid.map((row, rowIndex) => {
+    <div
+      className='grid w-4/6 bg-lime-500'
+      style={{
+        gridTemplateColumns: `repeat(${w}, minmax(0, 1fr))`,
+        gridTemplateRows: `repeat(${h}, minmax(0, 1fr))`,
+      }}
+    >
+      {new Array(h).fill(0).map((_, rowIndex) => {
         return (
-          <div className="flex" key={rowIndex}>
-            {
-              row.map((color, colIndex) => {
-                return (
-                  <Pixel key={colIndex} color={color} onChange={updatePixelState(rowIndex, colIndex)} />
-                )
-              })
-            }
+          <div className='subgrid col-span-full w-full' key={rowIndex}>
+            {new Array(w).fill(0).map((_, colIndex) => {
+              return (
+                <Pixel
+                  key={colIndex}
+                  onChange={updatePixelState(rowIndex, colIndex)}
+                />
+              );
+            })}
           </div>
-        )
-      })
-      }
+        );
+      })}
     </div>
-  )
-}
-
-function Pixel({
-  color,
-  onChange
-}: {
-  color: string;
-  onChange: (color: string) => void;
-}) {
-  const [isPickerOpen, setIsPickerOpen] = useState(false)
-
-  const handleColorChange: ColorChangeHandler = (color: ColorResult) => {
-    console.log(color);
-    setIsPickerOpen(false);
-    onChange(color.hex);
-  }
-
-  function handlePixelClick() {
-    setIsPickerOpen(!isPickerOpen)
-  }
-
-  return (
-    <div className="w-8 aspect-square border border-neutral-500 relative" style={{ backgroundColor: color }} onClick={handlePixelClick}>
-      {isPickerOpen &&
-        <SketchPicker className='absolute left-[110%] z-10' onChangeComplete={handleColorChange} />}
-    </div>
-  )
+  );
 }
 
 function createEmptyGrid(w: number, h: number) {
-  const grid: string[][] = []
+  const grid: string[][] = [];
   for (let i = 0; i < h; i++) {
-    grid.push([])
+    grid.push([]);
     for (let j = 0; j < w; j++) {
-      grid[i].push('#000000')
+      grid[i].push('#000000');
     }
   }
-  return grid
+  return grid;
 }
